@@ -1,0 +1,7 @@
+.env
+
+# Pychache 
+
+__pycache__
+./agents/url_parser_agent/__pycache__
+./agents/transcript_agent/__pycache__
