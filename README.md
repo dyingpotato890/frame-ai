@@ -1,7 +1,13 @@
 # Frame.AI: Video Segmentation For Short-Form Content Using Collaborative AI Agents
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Built with Google ADK](https://img.shields.io/badge/Built%20with-Google%20ADK-blue.svg)](https://ai.google.dev/docs/adk)
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
+  </a>
+  <a href="https://ai.google.dev/docs/adk">
+    <img src="https://img.shields.io/badge/Built%20with-Google%20ADK-blue.svg" alt="Built with Google ADK" />
+  </a>
+</p>
 
 Frame.AI is an innovative **collaborative AI agent system** specifically designed to revolutionize **shorts and reels content generation**. By intelligently analyzing long-form YouTube videos, Frame.AI identifies and extracts high-potential segments that are primed to go viral on platforms like YouTube Shorts, Instagram Reels, and TikTok.
 
@@ -18,12 +24,13 @@ Built with **Google's Agent Development Kit (ADK)**, Frame.AI operates through a
 * **Google ADK Powered:** Built on a robust and scalable framework, ensuring efficient processing and future extensibility.
 * **Optimized for Shorts & Reels:** Generates content with ideal aspect ratios, pacing, and engagement hooks for short-form video platforms.
 * **Transcription & Keyword Analysis:** Integrates with transcription services to analyze spoken content for trending keywords and impactful dialogue.
+* **Auto Subtitling & Organized Output:** Automatically generates accurate subtitles for each extracted clip and neatly organizes the video-subtitle pairs into dedicated folders for easy access and editing.
 
 ---
 
 ## Architecture: A Collaborative Agent System
 
-Frame.AI's core strength lies in its multi-agent architecture, orchestrated by a central **Main Orchestrating Agent** that delegates tasks and synthesizes outputs from four specialized **Sub-Agents**. This design, powered by Google's ADK, allows for a highly modular, scalable, and intelligent workflow.
+Frame.AI’s core strength lies in its multi-agent architecture, orchestrated by a central VideoSegmentAgent that delegates tasks to specialized sub-agents. Among them, the Video Processing Agent manages a sequence of sub-agents for downloading, clipping, and subtitling content. This design ensures scalable, modular, and efficient short-form content generation using Google’s ADK.
 
 ```mermaid
 flowchart TD
@@ -31,9 +38,11 @@ flowchart TD
     B --> C[URL Parser Agent]
     C --> D[Transcription Agent]
     D --> E[Segmentation Agent]
-    E --> F[Video Download Agent]
-    F --> G[Video Clip Agent]
-    G --> H[Viral Shorts & Reels]
+    E --> F[Video Processing Agent]
+    F --> F1[Video Download Agent]
+    F1 --> F2[Video Clip Agent]
+    F2 --> F3[Subtitles Agent]
+    F3 --> H["Viral Shorts & Reels (Video + Subtitles)"]
 ```
 
 ---
@@ -50,8 +59,13 @@ The **VideoSegmentAgent** orchestrates the following sub-agents in a precise seq
 
 * **Segmentation Agent (`segmentation_agent`):**
     * **Role:** The "brain" behind identifying virality. This agent meticulously analyzes the transcribed text, looking for keywords, emotional peaks, rapid topic shifts, and other indicators of viral potential. It then pinpoints precise start and end times for the most compelling clips, applying a sophisticated scoring algorithm.
-
+     
 * **Video Processing Agent (`video_processing_agent`):**
-    * **Role:** This comprehensive agent handles all the heavy lifting of video manipulation to bring those segments to life. It's a powerhouse that further breaks down into dedicated sub-tasks:
-        * **Video Download Agent (`video_download_agent`):** First, it ensures the full YouTube video is downloaded, ready for manipulation.
-        * **Video Clip Agent (`video_clip_agent`):** Next, it precisely extracts the high-potential segments identified by the `segmentation_agent`.
+    * **Role:** Handles all video-related tasks: downloading, clipping, and subtitling. It executes a pipeline of sub-agents and organizes outputs into folders for each processed clip.
+    * **Sub-agents (via AgentTool):**
+        * **Video Download Agent (`video_download_agent`)** – Ensures the full YouTube video is downloaded, ready for manipulation.
+        * **Video Clip Agent (`video_clip_agent`)** – Precisely extracts the high-potential segments identified by the `segmentation_agent`.
+        * **Subtitles Agent (`subtitles_agent`)** – Generates subtitles and organizes the video-subtitle output.
+
+* **Subtitles Agent (`subtitles_agent`):**
+    * **Role:** Generates subtitles for each clipped segment and moves both video and subtitle files into structured output folders. It enhances accessibility and simplifies upload or post-production tasks. This agent is invoked internally by the `video_processing_agent`.
