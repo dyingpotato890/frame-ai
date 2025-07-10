@@ -12,7 +12,6 @@ GROQ_MODEL_NAME = "llama3-8b-8192"
 groq_llm = LiteLlm(
     api_key=os.environ['GROQ_DUPE'],
     model=f"groq/{GROQ_MODEL_NAME}",
-    
 )
 
 URL_PARSER_PROMPT = """

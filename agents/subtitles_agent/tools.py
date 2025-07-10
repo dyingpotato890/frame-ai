@@ -30,9 +30,6 @@ def generate_subtitles(input_shorts_dir: str = "temp_shorts"):
     project_root = os.path.dirname(os.path.dirname(script_dir))
     output_downloads_dir = os.path.join(project_root, "downloads")
 
-    # Load the Whisper model once
-    # "base" is a good balance for accuracy and speed on CPU.
-    # Use "cuda" for GPU if available and properly configured.
     print("Loading Whisper model (this may take a moment)...")
     try:
         model = WhisperModel("base", device="cpu", compute_type="int8") # Try "cuda" if you have GPU
@@ -75,7 +72,7 @@ def generate_subtitles(input_shorts_dir: str = "temp_shorts"):
             print("Extracting audio...")
             video_clip = VideoFileClip(video_path)
             video_clip.audio.write_audiofile(audio_path) # type: ignore
-            video_clip.close() # Important to close the clip
+            video_clip.close()
             print("Audio extraction complete.")
 
             # 2. Transcribe audio and generate SRT
@@ -92,7 +89,7 @@ def generate_subtitles(input_shorts_dir: str = "temp_shorts"):
                 srt_content.append(str(segment_id))
                 srt_content.append(f"{start_time_str} --> {end_time_str}")
                 srt_content.append(text)
-                srt_content.append("") # Empty line separates entries
+                srt_content.append("")
                 segment_id += 1
 
             srt_path = os.path.join(output_folder_path, srt_filename)

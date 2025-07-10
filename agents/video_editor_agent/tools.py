@@ -51,7 +51,6 @@ def split_video(segments: List[Segment], base_filename: str = "") -> list:
             try:
                 validated_segments.append(Segment(**s))
             except ValidationError as e:
-                # Print validation error details for debugging
                 print(f"ERROR: Pydantic validation failed for segment {i} (input was a dict): {e}")
                 print(f"Original dictionary for segment {i}: {s}")
                 traceback.print_exc()
@@ -62,7 +61,7 @@ def split_video(segments: List[Segment], base_filename: str = "") -> list:
             print(f"ERROR: Unexpected type for segment {i}: {type(s)}. Expected dict or Segment.")
             raise TypeError(f"Segment {i} is of unexpected type: {type(s)}.")
     
-    segments = validated_segments # Ensure we're working with validated Segment objects
+    segments = validated_segments
 
     def find_video_file():
         downloads_dir = os.path.join(os.getcwd(), "downloads")
@@ -78,7 +77,7 @@ def split_video(segments: List[Segment], base_filename: str = "") -> list:
             return parts[0] * 60 + parts[1]
         elif len(parts) == 3:
             return parts[0] * 3600 + parts[1] * 60 + parts[2]
-        return int(time_str) # Fallback if single number (should not happen with regex in Field)
+        return int(time_str)
 
     def sanitize_filename(name):
         name = re.sub(r'[<>:"/\\|?*]', '_', name)
@@ -86,7 +85,6 @@ def split_video(segments: List[Segment], base_filename: str = "") -> list:
         return name.strip('._')[:100]
 
     def find_ffmpeg():
-        # Check common paths for ffmpeg executable
         for path in ['ffmpeg', 'C:\\ffmpeg\\bin\\ffmpeg.exe', '/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg']:
             try:
                 subprocess.run([path, "-version"], capture_output=True, timeout=5, check=True)
@@ -110,7 +108,7 @@ def split_video(segments: List[Segment], base_filename: str = "") -> list:
 
     results = []
 
-    for i, segment in enumerate(segments): # 'segment' is now guaranteed to be a Segment instance
+    for i, segment in enumerate(segments):
         try:
             start = time_to_seconds(segment.start_time)
             end = time_to_seconds(segment.end_time)

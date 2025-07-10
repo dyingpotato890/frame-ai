@@ -1,4 +1,4 @@
-from google.adk.agents import Agent, SequentialAgent
+from google.adk.agents import Agent
 from google.adk.tools.agent_tool import AgentTool
 from google.adk.models.lite_llm import LiteLlm
 import os
