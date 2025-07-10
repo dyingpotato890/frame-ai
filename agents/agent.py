@@ -11,7 +11,7 @@ root_agent = SequentialAgent(
         url_parser_agent,
         transcription_agent,
         segmentation_agent,
-        video_processing_agent
+        video_processing_agent,
     ],
-    description="Extracts the video url and generates the transcripts and breaks the video down into clips.",
+    description="Extracts the video url and generates the transcripts and breaks the video down into clips and then generates subtitles.",
 )

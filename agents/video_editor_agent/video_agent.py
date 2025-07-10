@@ -1,22 +1,33 @@
 from google.adk.agents import Agent, SequentialAgent
+from google.adk.tools.agent_tool import AgentTool
+from google.adk.models.lite_llm import LiteLlm
+import os
+from dotenv import load_dotenv
 
-# from agents.segmentation_agent.types import SegmentationOutput
+from ..subtitles_agent.subtitles_agent import subtitles_agent
+
+load_dotenv()
+os.environ['GROQ_API_KEY']
+
+GROQ_MODEL_NAME = "llama3-8b-8192"
+groq_llm = LiteLlm(
+    model=f"groq/{GROQ_MODEL_NAME}",
+)
 
 from .tools import (
     download_video,
     split_video,
-    convert_to_shorts_ratio
 )
 
 from .instructions import (
     DOWNLOAD_PROMPT,
     CLIPPING_PROMPT,
-    RESIZE_PROMPT
+    VIDEO_PROCESSING_PROMPT
 )
 
 video_download_agent = Agent(
     name="video_download_agent",
-    model="gemini-2.0-flash",
+    model=groq_llm,
     description="Fetches the video and downloads it to the system.",
     instruction=DOWNLOAD_PROMPT,
     tools=[download_video],
@@ -32,21 +43,15 @@ video_clip_agent = Agent(
     output_key="clipped_videos"
 )
 
-resize_agent = Agent(
-    name="resize_agent",
-    model="gemini-2.0-flash",
-    description="Agent to resize the videos to shorts/reels format with or withput face detection.",
-    instruction=RESIZE_PROMPT,
-    tools=[convert_to_shorts_ratio],
-    output_key="trending_news_data"
-)
-
-video_processing_agent = SequentialAgent(
+video_processing_agent = Agent(
     name="video_processing_agent",
     description="Downloads and preprocesses the videos.",
-    sub_agents=[
-        video_download_agent, 
-        video_clip_agent,
-        # resize_agent,
-    ]
+    instruction=VIDEO_PROCESSING_PROMPT,
+    model="gemini-2.0-flash",
+    tools=[
+        AgentTool(agent=video_download_agent),
+        AgentTool(agent=video_clip_agent),
+        AgentTool(agent=subtitles_agent),
+    ],
+    output_key="processed_videos"
 )
