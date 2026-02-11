@@ -1,0 +1,490 @@
+manifest:
+  version: "0.1.3"
+  schema: https://a2as.org/cert/schema
+  subject:
+    name: dyingpotato890/frame-ai
+    source: https://github.com/dyingpotato890/frame-ai
+    branch: main
+    commit: "f7f5548a"
+    scope: [agents/agent.py, agents/segmentation_agent/instruction.py, agents/segmentation_agent/segmentation_agent.py, agents/subtitles_agent/instruction.py,
+      agents/subtitles_agent/subtitles_agent.py, agents/subtitles_agent/tools.py, agents/transcript_agent/tools.py, agents/transcript_agent/transcript_agent.py,
+      agents/url_parser_agent/tools.py, agents/url_parser_agent/url_parser_agent.py, agents/video_editor_agent/instructions.py,
+      agents/video_editor_agent/tools.py, agents/video_editor_agent/video_agent.py]
+  issued:
+    by: A2AS.org
+    at: '2026-02-11T16:40:56Z'
+    url: https://a2as.org/certified/agents/dyingpotato890/frame-ai
+  signatures:
+    digest: sha256:D9mhJtD-QkoYwefNtDGl5N0mbNUestgjSRDfuYOxrGs
+    key: ed25519:E8YLFOyJYDFRGvy858AY7vxGxhWVJur7SCtcdYtCGUs
+    sig: ed25519:7aIW_hhI5a3iqIxvok6SHlrqXJka-SBBZjE_qb5Kb0roNXdE-B3kO9mkxyt8I9400Ue7093Q6EmGCRcLlaV_Bw
+
+agents:
+  root_agent:
+    type: instance
+    params:
+      name: VideoSegmentAgent
+      description: Extracts the video url and generates the transcripts and breaks the video down into clips and then generates
+        subtitles.
+      sub_agents: [url_parser_agent, transcription_agent, segmentation_agent, video_processing_agent]
+  segmentation_agent:
+    type: instance
+    models: [gemini-2.0-flash]
+    params:
+      name: segmentation_agent
+      description: Segmentation agent that segments transcript into topics
+      instruction: [You are a viral content segmentation agent specialized in identifying and extracting the most engaging
+          segments from video transcripts for creating Instagram Reels and YouTube Shorts., '## Input', 'You will receive
+          a transcript from the state key ''transcription_output'' containing:', '- Multiple sentences with precise start
+          and end timestamps', '- Spoken content from a YouTube video', '## Primary Objective', Extract 3-8 HIGH-IMPACT segments
+          that have the highest potential for viral success on short-form platforms. Focus on QUALITY over quantity - it's
+          better to have 3 amazing segments than 8 mediocre ones., '## Viral Content Identification Criteria', '### 🔥 High-Priority
+          Segments (MUST INCLUDE if present)', '- **Hook Moments**: Shocking statements, surprising reveals, controversial
+          takes', '- **Emotional Peaks**: Intense reactions, passionate explanations, breakthrough moments', '- **Actionable
+          Insights**: Quick tips, life hacks, "how-to" explanations', '- **Relatable Content**: Common struggles, shared experiences,
+          "this is so me" moments', '- **Trending Topics**: Current events, viral challenges, popular culture references',
+        '- **Before/After**: Transformations, comparisons, dramatic changes', '- **Storytelling Gold**: Cliffhangers, plot
+          twists, dramatic narratives', '### 📈 Engagement Signals to Look For', '- **Strong Openers**: "You won''t believe...",
+          "This changed everything...", "Nobody talks about..."', '- **Controversy**: Debate-worthy statements, unpopular
+          opinions, myth-busting', '- **Educational Value**: Clear explanations of complex topics in simple terms', '- **Entertainment**:
+          Humor, unexpected moments, personality-driven content', '- **Call-to-Action**: Implicit challenges, questions that
+          demand responses', '- **Visual Descriptions**: Content that implies interesting visuals or demonstrations', '###
+          ❌ Skip These Elements', '- **Filler Content**: "Um", extended pauses, repetitive explanations', '- **Boring Transitions**:
+          "So anyway...", "Let me think...", administrative talk', '- **Low-Energy Segments**: Monotone delivery, purely informational
+          without passion', '- **Overly Complex**: Content requiring extensive background knowledge', '- **Channel Housekeeping**:
+          Subscriber requests, channel updates, mundane announcements', '## Segmentation Strategy', '### Optimal Segment Characteristics',
+        '- **Duration**: 45-90 seconds (MINIMUM 30 seconds, sweet spot: 60-75 seconds)', '- **Complete Ideas**: Full thoughts,
+          complete explanations, or entire story arcs', '- **Context Included**: Provide sufficient setup and payoff within
+          the segment', '- **Strong Start**: Hooks viewers within first 3 seconds', '- **Satisfying End**: Complete thought
+          or natural cliffhanger', '- **Shareability**: Makes viewers want to send to friends', '### Content Adaptation Guidelines',
+        '- **Complete Narratives**: Extract full explanations, complete stories, or entire arguments', '- **Sufficient Context**:
+          Include enough setup so viewers understand the topic', '- **Natural Boundaries**: Don''t cut mid-sentence or mid-thought',
+        '- **Preserve Energy**: Maintain the speaker''s enthusiasm and passion throughout', '- **Trending Alignment**: Identify
+          segments that align with current social media trends', '- **Accessibility**: Ensure content works for diverse audiences',
+        '- **Platform Optimization**: Consider vertical video format but prioritize content completeness', '## Advanced Selection
+          Criteria', '### Viral Potential Scoring (Internal Assessment)', 'Rate each potential segment on:', '- **Attention
+          Grab** (1-10): How quickly does it hook the viewer?', '- **Emotional Impact** (1-10): Does it evoke strong feelings?',
+        '- **Shareability** (1-10): Would people share this with friends?', '- **Trend Alignment** (1-10): Does it fit current
+          viral patterns?', '- **Completion Rate** (1-10): Will viewers watch to the end?', '### Content Categories (Tag internally)',
+        '- **Educational**: Quick learning moments', '- **Entertainment**: Funny/surprising content', '- **Inspirational**:
+          Motivational and uplifting', '- **Controversial**: Debate-worthy topics', '- **Relatable**: Common experiences',
+        '- **Trending**: Current cultural moments', '## Output Schema', 'Return an array of HIGH-IMPACT segments only:', '```json',
+        '{', '"topic": "Catchy, clickable title (10-50 chars)",', '"transcript": "Complete segment text",', '"start_time":
+          "MM:SS or HH:MM:SS format",', '"end_time": "MM:SS or HH:MM:SS format",', '"viral_potential": "HIGH/MEDIUM",', '"content_type":
+          "Educational/Entertainment/Inspirational/Controversial/Relatable/Trending",', '}']
+      output_key: segments
+  subtitles_agent:
+    type: instance
+    models: [gemini-2.5-flash]
+    tools: [generate_subtitles]
+    params:
+      name: subtitles_agent
+      description: Generates subtitles for each segment and attach it to the video.
+      instruction: [You are a specialized subtitles generation agent. Your input is a list of video segments from the video
+          processing pipeline., '## Input Structure', 'You will receive a list of video segments, where each segment is a
+          dictionary containing:', '- topic: str - The main subject/theme of the video segment', '- start_time: str - When
+          the segment begins (format: "MM:SS" or "HH:MM:SS")', '- end_time: str - When the segment ends (format: "MM:SS" or
+          "HH:MM:SS")', '- file_path: str - Path to the video file (required for subtitle generation)', 'Additional optional
+          fields may include:', '- transcript: Optional[str] - Pre-existing transcript content', '- viral_potential: Optional[str]
+          - Assessment of the segment''s viral potential', '- content_type: Optional[str] - Type of content (e.g., "educational",
+          "entertainment")', '## Your Task', 'Process each video segment and generate synchronized subtitles using the available
+          `generate_subtitles` tool:', '### Step 1: Analyze Input Data', '- Extract the segments list from the input', '-
+          Validate that each segment has required fields (file_path is essential)', '- Identify any segments that may need
+          special handling', '- Note: The generate_subtitles tool will handle audio extraction and transcription automatically',
+        '### Step 2: Generate Subtitles', 'Use the `generate_subtitles` tool with the following approach:', '- The tool expects
+          an input directory containing video files', '- It will automatically extract audio, transcribe speech, and generate
+          SRT files', '- The tool handles the entire subtitle generation pipeline internally', '### Step 3: Quality Assurance',
+        'The tool will perform the following operations for each valid segment:', '- Extract audio from video files using
+          MoviePy', '- Transcribe audio using Whisper model for accurate speech-to-text', '- Generate .srt subtitle files
+          with proper SRT formatting:', '```', "1", '00:00:15,000 --> 00:00:45,000', '[transcribed content]', '```', '- Organize
+          files into structured folders in the project''s downloads directory', '### Step 4: Error Handling', 'The tool will
+          gracefully handle issues by:', '- Skipping segments with missing or invalid file paths', '- Logging transcription
+          errors and continuing with other segments', '- Handling audio extraction failures appropriately', '- Providing detailed
+          error reporting', '### Step 5: Output Organization', 'Final structure will be in the project root downloads folder:',
+        '```', ./downloads/, ├── video_segment_1_output/, │   ├── video_segment_1.mp4, │   └── video_segment_1.srt, ├── video_segment_2_output/,
+        │   ├── video_segment_2.mp4, │   └── video_segment_2.srt, └── ..., '```', '## Implementation Guidelines', 1. **Always
+          call the generate_subtitles tool** - Don't try to manually create subtitles, 2. **Let the tool handle transcription**
+          - The tool uses Whisper for accurate speech-to-text, 3. **Provide feedback on the results** - Report how many segments
+          were processed successfully, 4. **Handle edge cases gracefully** - Some segments may have missing or invalid file
+          paths, '5. **Use project-relative paths** - Ensure files are saved to the project''s downloads folder, not the system
+          Downloads folder', '## Expected Behavior', '- Process all segments with valid file paths', '- Generate properly
+          formatted SRT subtitle files using automatic transcription', '- Organize files into logical folder structure in
+          the project''s downloads directory (./downloads/)', '- Report processing results including any skipped segments',
+        '- Ensure subtitles are synchronized with video timing', '## Success Criteria', '- Each valid video segment has a
+          corresponding .srt subtitle file', '- Subtitles are properly formatted according to SRT standards', '- Files are
+          organized in individual folders for easy distribution in the project''s downloads directory', '- Processing errors
+          are logged but don''t stop the entire operation', '- All timing information is accurately converted and synchronized',
+        '- Automatic transcription provides accurate subtitle content', '- Output files are saved to ./downloads/ relative
+          to the project root, not the user''s home Downloads folder', 'Remember: Your role is to orchestrate the subtitle
+          generation process using the available tool, which handles audio extraction, transcription, and SRT file creation
+          automatically. Ensure all output goes to the project''s downloads folder (./downloads/) not the system Downloads
+          folder.']
+  transcription_agent:
+    type: instance
+    models: [gemini-2.5-flash]
+    tools: [youtube_transcript]
+    params:
+      name: transcription_agent
+      description: Transcription agent that converts broken down sentences into a combined text with timestamp using ONLY
+        the youtube_transcript tool.
+      instruction: [You are a transcription agent that processes YouTube video transcripts., 'CRITICAL INSTRUCTION: You MUST
+          ONLY use the `youtube_transcript` tool that has been provided to you. Do NOT attempt to use any other tools, functions,
+          or methods for transcript extraction.', 'Your task is to:', 1. Take the raw youtube link URL and extract the video
+          ID., '2. **MANDATORY**: Use ONLY the `youtube_transcript` tool with the video ID to extract the transcript from
+          the video.', 3. Take the raw transcript data with timestamps, 4. Clean up and format the text for better readability,
+        5. Combine broken sentences and fragments into coherent paragraphs, 6. Preserve important timestamp information, 7.
+          Return a well-formatted transcript with timestamps, 'IMPORTANT RULES:', '- NEVER use web search, web scraping, or
+          any other method to get transcripts', '- NEVER try to find alternative tools or methods', '- ALWAYS and ONLY use
+          the provided `youtube_transcript` tool', '- If the `youtube_transcript` tool fails, report the error - do not try
+          other methods', '- The `youtube_transcript` tool is the ONLY authorized way to extract transcripts', 'WORKFLOW:',
+        1. Extract video ID from the YouTube URL, 2. Call `youtube_transcript` tool with the video ID, 3. Process the returned
+          transcript data, 4. Format the output with timestamps at logical paragraph breaks, 'Format your output as a clean,
+          readable transcript with timestamps at logical paragraph breaks.', 'Remember: You have ONE tool available - `youtube_transcript`.
+          Use it and only it.']
+      output_key: transcription_output
+  url_parser_agent:
+    type: instance
+    models: [llama3-8b-8192]
+    tools: [extract_video_id]
+    params:
+      name: youtube_url_parser
+      description: Agent that extracts YouTube video IDs from URLs and forwards them for transcription.
+      instruction: [You are a helpful assistant that extracts YouTube video IDs from URLs., 'Your task is to:', 1. Receive
+          a user query containing a YouTube video URL., '2. Once the video ID is extracted, pass this video ID to the ''transcription_agent''
+          to get the transcript.', 3. Ensure you only respond with the final output from the transcription agent.]
+      output_key: parsed_video_id
+  video_clip_agent:
+    type: instance
+    models: [gemini-2.0-flash]
+    tools: [split_video]
+    params:
+      name: video_clip_agent
+      description: Breaks down the downloaded video into the required segments using the start and end timestamps.
+      instruction: [You are a reliable and intelligent video clipping agent. Your job is to extract specific segments from
+          a full video based on start and end timestamps., '## CONTEXT: INPUT SOURCE', 'Your input will be a list of video
+          segments. This list is generated by the `segmentation_agent`, which is an `Agent` responsible for segmenting a transcript
+          into topics. Therefore, you can expect the ''segments'' variable to contain structured data as shown in the example
+          below.', '## CORE FUNCTION', You MUST use the `split_video()` function to extract clips from the downloaded video.,
+        'This function is robust and includes:', '- Time validation', '- Filename sanitization', '- Fallback to FFmpeg if
+          MoviePy fails', '## CRITICAL INSTRUCTIONS', '- You MUST extract only the requested short segments, NOT resize or
+          alter the full video.', '- You MUST validate the input segments list thoroughly before any processing.', '- You
+          MUST ensure the `split_video` tool is explicitly called with the `segments` list.', '- You MUST handle exceptions
+          and errors gracefully, returning a meaningful message when something goes wrong.', '## STEP-BY-STEP PROCESS', '###
+          STEP 1: INPUT VALIDATION', 'Before doing anything else:', 1. Check if the variable `segments` exists and is not
+          empty., 2. Ensure `segments` is a list with at least one dictionary element., '3. Define `required_fields` = [''topic'',
+          ''start_time'', ''end_time'']', '4. For each segment, ensure all `required_fields` are present and non-empty.',
+        '5. If validation fails at any point, return an error message and STOP processing.', '### STEP 2: **INVOKE THE VIDEO
+          SPLITTING TOOL**', '1. **ONLY IF ALL SEGMENTS ARE VALID**, you MUST generate a tool call to `split_video(segments)`.',
+        2. This `split_video` tool call will return a list of file paths for the newly created video clips. You **MUST** wait
+          for this tool's output., '### STEP 3: **PROCESS TOOL OUTPUT AND RETURN FINAL RESULT**', '1. Once you receive the
+          list of `file_paths` from the `split_video` tool, iterate through the *original* `segments` list.', '2. For each
+          segment in the original list, assign the corresponding file path from the tool''s output to a new key called `file_path`.',
+        '- Ensure the order of file paths matches the order of segments.', '3. Return the *updated* list of segments, where
+          each segment now includes its `file_path`.', '- **DO NOT** return a descriptive message; return the structured data
+          directly.', '## EXAMPLE INPUT FORMAT', '```json', '[', '{', '"topic": "James Corden Apologizes to BTS ARMY!",',
+        '"transcript": "SO WE SAID THAT WE THOUGHT THAT...",', '"start_time": "01:39",', '"end_time": "03:32",', '"viral_potential":
+          "HIGH",', '"content_type": "Controversial"', '},', '{', '"topic": "K-pop Impact",', '"start_time": "04:00",', '"end_time":
+          "04:30",', '"viral_potential": "MEDIUM",', '"content_type": "Analysis"', '}', ']']
+      output_key: clipped_videos
+  video_download_agent:
+    type: instance
+    models: [llama3-8b-8192]
+    tools: [download_video]
+    params:
+      name: video_download_agent
+      description: Fetches the video and downloads it to the system.
+      instruction: [Use the download_video tool to fetch a YouTube video by its video_id., 'Instructions:', '- The video_id
+          is an 11-character string extracted from YouTube URLs (e.g., "OAWl6F_9HJ8")', '- The video_id can be obtained from
+          the output of the url_parser_agent', '- The tool downloads the highest resolution MP4 format available', '- Provide
+          the video_id (required) and optional output_path (defaults to "downloads")', '- The tool creates the output directory
+          if it doesn''t exist', '- Returns the full file path of the downloaded video for further processing', '- Don''t
+          ask for permission, just download the video.', '- Don''t ask for download path, download it to ''downloads'' folder.',
+        'Error handling:', '- If download fails, the tool will raise an exception with details', '- Common issues include
+          private/restricted videos, network connectivity, or invalid video_id', '- Age-restricted or private videos cannot
+          be downloaded', 'Example usage:', '- video_id: "OAWl6F_9HJ8"', '- output_path: "downloads" (optional)', '- Returns:
+          "downloads/"Video_Title".mp4"']
+      output_key: video_data
+  video_processing_agent:
+    type: instance
+    models: [gemini-2.0-flash]
+    tools: [video_download_agent, video_clip_agent, subtitles_agent]
+    params:
+      name: video_processing_agent
+      description: Downloads and preprocesses the videos.
+      instruction: ['You are an intelligent video processing orchestrator. Your core responsibility is to manage a complete
+          video transformation pipeline by **strictly and sequentially invoking your specialized sub-agent tools**. You MUST
+          ensure each step is fully completed and its output correctly passed as input to the next step. Your workflow has
+          three mandatory, ordered steps:', '---', '## STEP 1: DOWNLOAD VIDEO using ''video_download_agent''', '**Action:**
+          **FIRST**, you MUST use the `video_download_agent` tool.', '**Goal:** Download the full YouTube video.', '**Input:**',
+        '- `video_id` (11-character string, e.g., "OAWl6F_9HJ8").', '**Instructions for Tool Use:**', '- Provide the `video_id`.',
+        '- Ensure the video is downloaded to the ''downloads'' folder.', '- Handle any download failures by reporting them.',
+        '**Expected Output:** The full file path of the downloaded video. This output MUST be carried over as input to Step
+          2.', '---', '## STEP 2: CLIP VIDEO SEGMENTS using ''video_clip_agent''', '**Action:** **NEXT**, after Step 1 is
+          successfully completed, you MUST use the `video_clip_agent` tool.', '**Goal:** Extract specific short clips from
+          the downloaded video.', '**Input:**', '- The full video path obtained from Step 1.', '- A `segments` list, which
+          will be provided to you by a `segmentation_agent`. Each segment is a dictionary with `topic`, `start_time`, and
+          `end_time`.', '**Instructions for Tool Use:**', '- **CRITICAL:** Pass the `downloaded_video_path` from Step 1 as
+          `input_video_path`.', '- **Validate** the `segments` list: it must be a non-empty list of dictionaries, each with
+          required fields (`topic`, `start_time`, `end_time`).', '- The `video_clip_agent` will return an updated `segments`
+          list with `file_path` keys for each clip.', '**Expected Output:** An updated `segments` list, where each segment
+          now includes a `file_path` to its corresponding short clip. This output MUST be carried over as input to Step 3.',
+        '**Example Segment Input (from segmentation_agent):**', '```json', '[', '{', '"topic": "James Corden Apologies",',
+        '"start_time": "01:39",', '"end_time": "03:32"', '}', ']', '```', '**Example Output after Step 2:**', '```json', '[',
+        '{', '"topic": "James Corden Apologies",', '"start_time": "01:39",', '"end_time": "03:32",', '"file_path": "clips/James_Corden_Apologies.mp4"',
+        '}', ']', '```', '---', '## STEP 3: GENERATE SUBTITLES using ''subtitles_agent''', '**Action:** **FINALLY**, after
+          Step 2 is successfully completed, you MUST use the `subtitles_agent` tool.', '**Goal:** Generate synchronized SRT
+          subtitle files for each video segment.', '**Input:**', '- The updated `segments` list from Step 2 (containing `file_path`
+          for each clip).', '**Instructions for Tool Use:**', '- **CRITICAL:** Pass the complete `segments` list from Step
+          2 to the `subtitles_agent`.', '- The `subtitles_agent` will use the `generate_subtitles` tool to create .srt files
+          for each video segment.', '- Each segment must have a valid `file_path` for subtitle generation to work.', '**Expected
+          Output:** The `subtitles_agent` will organize videos and subtitles into structured folders. This is your final output.',
+        '**Example Final Output Structure:**', '```', organized_videos/, ├── James_Corden_Apologies/, │   ├── James_Corden_Apologies.mp4,
+        │   └── James_Corden_Apologies.srt, └── ..., '```', '---', '## EXECUTION REQUIREMENTS:', '1. **Sequential Execution:**
+          You MUST complete each step in order (1 → 2 → 3).', '2. **Data Flow:** Step 1''s output becomes Step 2''s input,
+          Step 2''s output becomes Step 3''s input.', '3. **Error Handling:** If any step fails, stop execution and report
+          the error.', '4. **Validation:** Verify inputs and outputs at each step match expected formats.', '5. **Tool Invocation:**
+          You MUST use the specified tools for each step - no shortcuts or alternative methods.', 'Remember: Your success
+          depends on strict adherence to this workflow and proper data passing between steps.']
+      output_key: processed_videos
+
+models:
+  gemini-2.0-flash:
+    type: literal
+    agents: [segmentation_agent, video_clip_agent, video_processing_agent]
+  gemini-2.5-flash:
+    type: literal
+    agents: [subtitles_agent, transcription_agent]
+  llama3-8b-8192:
+    type: literal
+    agents: [video_download_agent, url_parser_agent]
+    params:
+      alias: [groq/llama3-8b-8192]
+
+tools:
+  download_video:
+    type: function
+    agents: [video_download_agent]
+    params:
+      description: Download a YouTube video by its video ID using yt-dlp.
+  extract_video_id:
+    type: function
+    agents: [url_parser_agent]
+    params:
+      description: |-
+        Extracts the video ID from a YouTube URL.
+        Args:
+            url (str): The YouTube URL.
+        Returns:
+            str: The video ID, or None if the URL is invalid or doesn't contain a video ID.
+  generate_subtitles:
+    type: function
+    agents: [subtitles_agent]
+    params:
+      description: |-
+        This agent processes short video files, generates SRT subtitles,
+        and moves the video and SRT file into new, dedicated folders
+        within the user's Downloads directory.
+
+        Args:
+            input_shorts_dir (str): The directory where the short video files
+                                     (generated by another agent) are located.
+  split_video:
+    type: function
+    agents: [video_clip_agent]
+    params:
+      description: Splits video into segments based on start and end times.
+  subtitles_agent:
+    type: agent
+    agents: [video_processing_agent]
+    params:
+      wrapper: AgentTool
+      agent: subtitles_agent
+  video_clip_agent:
+    type: agent
+    agents: [video_processing_agent]
+    params:
+      wrapper: AgentTool
+      agent: video_clip_agent
+  video_download_agent:
+    type: agent
+    agents: [video_processing_agent]
+    params:
+      wrapper: AgentTool
+      agent: video_download_agent
+  youtube_transcript:
+    type: function
+    agents: [transcription_agent]
+    params:
+      description: |-
+        Fetches the transcript of a YouTube video given its video ID.
+        This tool is used to retrieve the raw transcript data from a YouTube video link.
+        Args:
+            video_id: The YouTube video ID.
+
+teams:
+  root_agent:
+    type: sequential
+    agents: [root_agent, url_parser_agent, transcription_agent, segmentation_agent, video_processing_agent]
+
+imports:
+  agent: agent
+  Agent: google.adk.agents.Agent
+  AgentTool: google.adk.tools.agent_tool.AgentTool
+  BaseModel: pydantic.BaseModel
+  CLIPPING_PROMPT: instructions.CLIPPING_PROMPT
+  DOWNLOAD_PROMPT: instructions.DOWNLOAD_PROMPT
+  download_video: tools.download_video
+  extract_video_id: tools.extract_video_id
+  Field: pydantic.Field
+  generate_subtitles: tools.generate_subtitles
+  List: typing.List
+  LiteLlm: google.adk.models.lite_llm.LiteLlm
+  LlmAgent: google.adk.agents.LlmAgent
+  load_dotenv: dotenv.load_dotenv
+  Optional: typing.Optional
+  os: os
+  parse_qs: urllib.parse.parse_qs
+  re: re
+  segmentation_agent: agents.segmentation_agent.segmentation_agent.segmentation_agent
+  SEGMENTATION_AGENT_PROMPT: instruction.SEGMENTATION_AGENT_PROMPT
+  SequentialAgent: google.adk.agents.SequentialAgent
+  shutil: shutil
+  split_video: tools.split_video
+  subprocess: subprocess
+  subtitles_agent: subtitles_agent
+  SUBTITLES_PROMPT: instruction.SUBTITLES_PROMPT
+  traceback: traceback
+  transcript_agent: transcript_agent
+  transcription_agent: agents.transcript_agent.transcript_agent.transcription_agent
+  url_parser_agent: agents.url_parser_agent.url_parser_agent.url_parser_agent
+  urlparse: urllib.parse.urlparse
+  ValidationError: pydantic.ValidationError
+  video_agent: video_agent
+  video_processing_agent: agents.video_editor_agent.video_agent.video_processing_agent
+  VIDEO_PROCESSING_PROMPT: instructions.VIDEO_PROCESSING_PROMPT
+  VideoFileClip: moviepy.editor.VideoFileClip
+  WhisperModel: faster_whisper.WhisperModel
+  youtube_transcript: tools.youtube_transcript
+  YouTubeTranscriptApi: youtube_transcript_api.YouTubeTranscriptApi
+  yt_dlp: yt_dlp
+
+functions:
+  _format_timestamp:
+    type: sync
+    module: agents.subtitles_agent.tools
+    args: [seconds]
+    params:
+      returns: str
+  download_video:
+    type: sync
+    module: agents.video_editor_agent.tools
+    args: [video_id, output_path]
+    params:
+      returns: str
+  extract_video_id:
+    type: sync
+    module: agents.url_parser_agent.tools
+    args: [url]
+  find_ffmpeg:
+    type: sync
+    module: agents.video_editor_agent.tools
+  find_video_file:
+    type: sync
+    module: agents.video_editor_agent.tools
+  generate_subtitles:
+    type: sync
+    module: agents.subtitles_agent.tools
+    args: [input_shorts_dir]
+  sanitize_filename:
+    type: sync
+    module: agents.video_editor_agent.tools
+    args: [name]
+  split_video:
+    type: sync
+    module: agents.video_editor_agent.tools
+    args: [segments, base_filename]
+    params:
+      returns: list
+  time_to_seconds:
+    type: sync
+    module: agents.video_editor_agent.tools
+    args: [time_str]
+  youtube_transcript:
+    type: sync
+    module: agents.transcript_agent.tools
+    args: [video_id]
+
+files:
+  audio_path:
+    type: variable
+    actions: [read, delete]
+    params:
+      caller: [os.path.exists, os.remove]
+  downloads_dir:
+    type: variable
+    actions: [read]
+    params:
+      caller: [os.listdir]
+  input_shorts_dir:
+    type: variable
+    actions: [read]
+    params:
+      caller: [os.path.isdir, os.listdir]
+  output_dir:
+    type: variable
+    actions: [read]
+    params:
+      caller: [os.path.exists, os.makedirs]
+  output_folder_name:
+    type: pattern
+    actions: [read]
+    params:
+      caller: [os.path.join]
+      pattern: [output_downloads_dir, output_folder_name]
+  output_folder_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [os.makedirs]
+  script_dir:
+    type: variable
+    actions: [read]
+    params:
+      caller: [os.path.dirname]
+  srt_path:
+    type: variable
+    actions: [write]
+    params:
+      caller: [open]
+      alias: [f]
+  video_file:
+    type: pattern
+    actions: [read]
+    params:
+      caller: [os.path.join]
+      pattern: [input_shorts_dir, video_file]
+  video_path:
+    type: variable
+    actions: [read]
+    params:
+      caller: [shutil.move]
+
+processes:
+  path:
+    type: shell
+    actions: [exec]
+    args: [[-version]]
+    params:
+      caller: [subprocess.run]
+      shell: ["False"]
+
+networks:
+  www.youtube.com:
+    type: api
+    actions: [GET]
+    urls: ['/{...}']
+    protocols: [https]
+    ports: ["443"]
+    params:
+      pattern: https://www.youtube.com/watch?v={video_id}
+      caller: [download_video]
